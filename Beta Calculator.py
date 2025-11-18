@@ -1,0 +1,67 @@
+
+import seaborn as sns
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import yfinance as yf
+
+
+stocktckr = input("input stock ticker")
+startperiod= input("input start of time period")
+endperiod=input("in put end of time period")
+
+market=pd.read_csv('/Users/stephengrant/Downloads/s&p_data.csv')
+
+stock=pd.read_csv("/Users/stephengrant/Downloads/stock_prices.csv")
+
+stock.rename(columns={"close": "Close"}, inplace=True)
+stock.rename(columns={"date": "Date"}, inplace=True)
+stock_tickr=stock[(stock["ticker"]==stocktckr)&(stock["Date"]>=startperiod)&(stock["Date"]<=endperiod)]
+
+
+merged=pd.merge(stock_tickr[["Date","Close"]],market[["Date","Close"]],on="Date",suffixes=("_stock","_market"))
+print(merged)
+merged["stockreturn"]=merged["Close_stock"].pct_change()
+merged["marketreturn"]=merged["Close_market"].pct_change()
+
+corr = merged["stockreturn"].corr(merged["marketreturn"])
+print("Correlation (daily returns):", corr)
+cov = merged["stockreturn"].cov(merged["marketreturn"])
+print("Covariance:", cov)
+varmarket = merged["marketreturn"].var()
+
+beta = cov / varmarket
+r2 = corr ** 2
+
+print("beta:",beta)
+print("R^2",r2)
+
+mean_stock = merged["stockreturn"].mean()
+mean_market   = merged["marketreturn"].mean()
+
+
+vol_stock = merged["stockreturn"].std()
+vol_market   = merged["marketreturn"].std()
+
+print("mean stock return:",mean_stock)
+print("mean market return:",mean_market)
+print("volatility stock:",vol_stock)
+print("volatility market:",vol_market)
+corr_table = merged[["stockreturn", "marketreturn"]].corr()
+
+print("Correlation Summary Table:")
+print(corr_table)
+
+
+sns.regplot(
+    x="marketreturn",
+    y="stockreturn",
+    data=merged,
+    scatter_kws={"alpha":0.6},
+    line_kws={"color":"red"},
+)
+plt.title(f"{stocktckr} vs Market — Daily Returns")
+plt.xlabel("Market Return")
+plt.ylabel(f"{stocktckr} Return")
+plt.grid(True, alpha=0.3)
+plt.show()
