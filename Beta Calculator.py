@@ -11,15 +11,22 @@ startperiod= input("input start of time period")
 endperiod=input("in put end of time period")
 
 market=pd.read_csv('/Users/stephengrant/Downloads/s&p_data.csv')
+market['Date'] = pd.to_datetime(market['Date'])
 
 stock=pd.read_csv("/Users/stephengrant/Downloads/stock_prices.csv")
-
+print(stock.head())
+stock['date'] = pd.to_datetime(stock['date'])
+print(market.head())
 stock.rename(columns={"close": "Close"}, inplace=True)
 stock.rename(columns={"date": "Date"}, inplace=True)
 stock_tickr=stock[(stock["ticker"]==stocktckr)&(stock["Date"]>=startperiod)&(stock["Date"]<=endperiod)]
 
+stock = stock.sort_values("Date")
+market = market.sort_values("Date")
 
 merged=pd.merge(stock_tickr[["Date","Close"]],market[["Date","Close"]],on="Date",suffixes=("_stock","_market"))
+merged = merged.sort_values("Date")
+
 print(merged)
 merged["stockreturn"]=merged["Close_stock"].pct_change()
 merged["marketreturn"]=merged["Close_market"].pct_change()
